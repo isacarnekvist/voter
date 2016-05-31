@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% load staticfiles %}
+
+{% block scripts %}
+<script>
+var active_question;
+{% if class.active_question %}
+  activeQuestion = {{ class.active_question.id }};
+{% else %}
+  activeQuestion = -1;
+{% endif %}  
+function clickedQuestion(q_id) {
+  if (activeQuestion == -1) {
+    buttonChange(q_id, 1);
+    activeQuestion = q_id;
+  } else {
+    if (q_id == activeQuestion) {
+      buttonChange(q_id, 0);
+      activeQuestion = -1;
+    } else {
+      buttonChange(q_id, 1);
+      buttonChange(activeQuestion, 0);
+      activeQuestion = q_id;
+    }
+  }
+}
+
+function buttonChange(q_id, mode) {
+  $.ajax(
+  {
+    url: "{% url "question_state" %}",
+    type: "GET",
+    data: {'class_id': {{ class.id }},
+           'question_id': q_id,
+           'start_bool': mode},
+    success: [],
+  });
+
+  var button = $("#button-" + q_id);
+  if (mode == 0) {
+    button.attr('class', "glyphicon glyphicon-play");
+    button.parent().attr('class', 'btn btn-primary');
+  } else {
+    button.attr('class', "glyphicon glyphicon-stop");
+    button.parent().attr('class', 'btn btn-warning');
+  }
+}
+</script>
+{% endblock %}
+
+{% block content %}
+
+<div class="row">
+  <div class="col-md-6 col-md-offset-3">
+    <a href="{% url "frontpage" %}">← Back to decks and classes</a>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-6 col-md-offset-3">
+    <h1>Active class</h1>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-6 col-md-offset-3">
+    <table id="edit-table" class="table table-hover">
+      <tr>
+        <th width=90%>Question</th>
+        <th>Ask/Stop</th>
+      </tr>
+      {% for question in questions %}
+        <tr>
+          <td><a href="{% url "question_teacher" class.id question.id %}">{{ question }}</a></td>
+          {% if question.id == class.active_question.id %}
+            <td><a onClick="clickedQuestion({{ question.id }})"
+                   class="btn btn-warning"/>
+                 <span id="button-{{ question.id }}" class="glyphicon glyphicon-stop"></span>
+            </td>
+          {% else %}
+            <td><a onClick="clickedQuestion({{ question.id }})"
+                   class="btn btn-primary"/>
+                 <span id="button-{{ question.id }}" class="glyphicon glyphicon-play"></span>
+            </td>
+          {% endif %}
+        </tr>
+      {% empty %}
+        You have to add questions!
+      {% endfor %}
+    </table>
+  </div>
+</div>
+
+{% endblock %}

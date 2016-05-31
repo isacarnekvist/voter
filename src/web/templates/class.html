@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block scripts %}
+<script>
+function answerQuestion(classId, questionId, alternativeId) {
+  // TODO disable buttons
+  latestAnswered = questionId;
+  $("#question-" + questionId).hide();
+  $("#waiting").show();
+  $.ajax({
+    url: "{% url "answer_question" %}",
+    method: "GET",
+    data: {'class_id': classId,
+           'alternative_id': alternativeId},
+  });
+}
+
+var latestAnswered = -1;
+function setVisibilities(activeQuestion) {
+  if (activeQuestion == -1 || activeQuestion == latestAnswered) {
+    latestAnswered = activeQuestion;
+    questionIds.forEach(function(q_id) {
+      $("#question-" + q_id).hide();
+    });
+    $("#waiting").show();
+  } else {
+    questionIds.forEach(function(q_id) {
+      $("#question-" + q_id).hide();
+    });
+    $("#question-" + activeQuestion).show();
+    $("#waiting").hide();
+  }
+}
+
+var questionIds = new Set([{% for question in questions %}{{ question.id }},{% endfor %}]);
+function pollQuestions(classId) {
+  $.ajax({
+    url: "{% url "poll_active_question" %}",
+    method: "GET",
+    data: {'class_id': classId},
+    success: function(response) {
+      activeQuestion = parseInt(response);
+      setVisibilities(activeQuestion);
+    },
+  });
+}
+
+setInterval(function() {pollQuestions({{ class_id }});}, 1500);
+</script>
+{% endblock %}
+
+{% block content %}
+<div id="waiting">
+  <div class="row">
+    <div class="col-md-4 col-md-offset-4">
+      <h3 align="center">Waiting for questions from teacher...</h1>
+    </div>
+  </div>
+</div>
+
+{% for question in questions %}
+  <div id="question-{{ question.id }}" style="display: none">
+    <div class="row">
+      <div class="col-md-4 col-md-offset-4">
+        <h1 align="center">{{ question }}</h1>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-md-4 col-md-offset-4">
+        <div class="btn-group-vertical btn-block" role="group" aria-label="...">
+          {% for question_id, alternatives in alternative_dict.items %}
+              {% if question_id == question.id %}
+                {% for alternative in alternatives %}
+                  <button type="button btn-block"
+                          class="btn btn-default"
+                          onClick="answerQuestion({{ class_id }}, {{ question_id }}, {{ alternative.id }})">
+                    {{ alternative.text }}
+                  </button>
+                {% endfor %}
+              {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endfor %}
+
+{% endblock %}

@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% load staticfiles %}
+
+{% block scripts %}
+<script src="{% static "Chart.js/dist/chart.js" %}"></script>
+<script>
+function pollQuestion(classId, questionId) {
+  var result = "";
+  $.ajax(
+  {
+    url: "{% url "poll_question" %}",
+    type: "GET",
+    async: false,
+    data: {'class_id': classId,
+           'question_id': questionId},
+    success: function(data) {
+        result = data;
+    },
+  });
+  return result;
+}
+</script>
+<script>
+var ctx = $("#myChart");
+console.log(ctx);
+var labels = [
+  {% for label in labels %}"{{ label }}",{% endfor %}
+]
+var colors = [
+  {% for label in labels %}randomColor(),{% endfor %}
+]
+var counts = [{% for id, count in counts %}{{ count }},{% endfor %}];
+var data = {
+    labels: labels,
+    datasets: [
+      {
+        data: counts,
+        backgroundColor: colors,
+      }
+    ],
+};
+var myChart = new Chart(ctx, {
+  type: 'pie',
+  data: data,
+});
+function randomColor() {
+  hue = 50 + Math.floor(Math.random() * 205);
+  light = 30 + Math.floor(Math.random() * 40);
+  return "hsl(" + hue + ", 65%, " + light + "%)"
+}
+function foo() {
+  counts[2] += 5;
+  myChart.update();
+}
+function updateVotes() {
+  res = JSON.parse(pollQuestion({{ class.id}}, {{ question.id }}));
+  for(i = 0; i < labels.length; i++) {
+    counts[i] = res['counts'][i];
+  }
+  myChart.update();
+}
+setInterval(function() {updateVotes();}, 1500);
+</script>
+{% endblock %}
+
+{% block content %}
+
+
+<div class="row">
+  <div class="col-md-6 col-md-offset-3">
+    <a href="{% url "class_teacher" class.id %}">← Back to class</a>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-6 col-md-offset-3">
+    <h3 align="center">{{ question.text }}</h3>
+  </div>
+</div>
+<div class="row">
+  <div class="col-md-6 col-md-offset-3">
+    <canvas id="myChart"></canvas>
+  </div>
+</div>
+
+{% endblock %}

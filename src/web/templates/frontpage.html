@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="starter-template">
+  <h1>Voter - simple class polls</h1>
+  <p class="lead">
+      Join your existing class poll, or create your own.
+      <br>
+      To create a poll, register <a href="">here</a> or <a href="{% url "login" %}">log in.</a>
+  </p>
+</div>
+
+<div class="row">
+  <div class="col-md-6 col-md-offset-3">
+    <form action="{% url "class_view" %}" method="post">
+        {% csrf_token %}
+        <label for="classcode">Have a code for a class you want to join?</label>
+        <div class="input-group" id="classcode">
+          <input type="text" class="form-control" name="class_id" placeholder="Class code">
+          <span class="input-group-btn">
+            <button class="btn btn-primary" type="submit">Join</button>
+          </span>
+        </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block scripts %}
+<script>
+$("#testlink").click(addDeck);
+function addDeck() {
+    $("#last").before(
+      `<tr id="add-deck">
+         <form method="post" action="{% url "add_deck" %}">
+           {% csrf_token %}
+           <td colspan="2">
+             <input class="form-control" id="new_deck_name" type="text" name="new_deck_name" placeholder="New deck name"></input>
+           </td>
+           <td>
+             <button class="btn btn-primary" type="submit">
+               <span class="glyphicon glyphicon-ok"></span>
+             </button>
+           </td>
+           <td><a onClick="undoAdd()" class="btn btn-danger glyphicon glyphicon-remove"></a></td>
+         </form>
+       </tr>`
+    ).hide();
+}
+
+function undoAdd() {
+  $("#add-deck").remove();
+  $("#last").show();
+}
+
+function deleteDeck(deck_id) {
+  $.ajax(
+    {
+      url: "{% url "delete_deck" %}",
+      type: "GET",
+      data: {'deck_id': deck_id},
+      success: [deleteDeckRow(deck_id)],
+    });
+}
+
+function deleteDeckRow(deck_id) {
+  $("#deckid" + deck_id).parent().parent().remove();
+}
+
+function deleteClass(class_id) {
+  $.ajax(
+    {
+      url: "{% url "delete_class" %}",
+      type: "GET",
+      data: {'class_id': class_id},
+      success: [location.reload()],
+    });
+}
+</script>
+{% endblock %}
+
+{% block content %}
+
+<div class="row">
+    <div class="col-md-6 col-md-offset-3">
+        <h1>Decks</h1>
+        <table class="table table-hover">
+          <tr>
+            <th width=80%>Name</th>
+            <th>Edit</th>
+            <th>Start</th>
+            <th>Delete</th>
+          </tr>
+          {% for deck in decks %}
+            <tr>
+              <td width=80%><p class="button-align">{{ deck }}</p></td>
+              <td><a href="{% url "edit_deck" deck.id %}"class="btn btn-default glyphicon glyphicon-pencil"></a></td>
+              <td>
+                <a href="{% url "start_class" deck.id %}" class="btn btn-primary glyphicon glyphicon-play"></a>
+              </td>
+              <td>
+                <a onClick="deleteDeck({{ deck.id }})" id="deckid{{ deck.id }}" class="btn btn-danger glyphicon glyphicon-trash"/>
+              </td>
+            </tr>
+          {% endfor %}
+            <tr id="last"><td colspan=3 width=90%><a id="testlink">+ Create new deck</a><td></tr>
+        </table>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 col-md-offset-3">
+        <h1>Classes</h1>
+        <table class="table table-hover">
+          {% if classes %}
+          <tr>
+            <th width=40%>Deck name</th>
+            <th width=40%>Class code</th>
+            <th>View</th>
+            <th>Delete</th>
+          </tr>
+          {% endif %}
+          {% for class in classes %}
+            <tr>
+              <td width=40%><p class="button-align">{{ class.deck.name }}</p></td>
+              <td width=40%><code class="button-align">{{ class.id }}</code></td>
+              <td>
+                <a href="{% url "class_teacher" class.id %}" class="btn btn-primary glyphicon glyphicon-eye-open"></a>
+              </td>
+              <td>
+                <a onClick="deleteClass({{ class.id }})" id="classid{{ class.id }}" class="btn btn-danger glyphicon glyphicon-trash"/>
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td>No classes, press "Start" on an existing deck to start a new class.<td></tr>
+          {% endfor %}
+        </table>
+    </div>
+</div>
+
+<div class="row">
+  <div class="col-md-6 col-md-offset-3">
+    <form action="{% url "class_view" %}" method="post">
+        {% csrf_token %}
+        <label for="classcode">Want to participate in someones class?</label>
+        <div class="input-group" id="classcode">
+          <input type="text" class="form-control" name="class_id" placeholder="Class code">
+          <span class="input-group-btn">
+            <button class="btn btn-primary" type="submit">Join</button>
+          </span>
+        </div>
+    </form>
+  </div>
+</div>
+
+{% endblock %}
