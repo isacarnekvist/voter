@@ -80,5 +80,4 @@ def get_reply_counts(class_id, question_id):
     # Made as list to have same ordering in both returns
     counts = [(id, counter[id]) for id in ids]
     labels = [id2label[id] for id in ids]
-    print(class_id, question_id, counts, labels)
     return counts, labels
